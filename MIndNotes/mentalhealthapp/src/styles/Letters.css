@@ -1,0 +1,31 @@
+.letters-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+.letters-container li {
+    background: #fff;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+
+.letter-form {
+    display: flex;
+    flex-direction: column;
+    max-width: 400px;
+}
+
+.letter-form input, .letter-form textarea {
+    margin-bottom: 10px;
+    padding: 8px;
+    width: 100%;
+}
+
+.letter-form button {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+}

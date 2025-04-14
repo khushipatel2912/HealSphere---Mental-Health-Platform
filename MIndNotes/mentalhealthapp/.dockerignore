@@ -1,0 +1,27 @@
+# Node dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build output
+build
+dist
+
+# Local env
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE/Editor stuff
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# System files
+.DS_Store
+Thumbs.db
+
