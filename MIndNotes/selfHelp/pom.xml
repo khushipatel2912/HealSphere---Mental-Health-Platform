@@ -173,7 +173,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.self_discovery_service.SelfDiscoveryServiceApplication</mainClass>
+                            <mainClass>com.example.selfhelp.SelfHelpApplication</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

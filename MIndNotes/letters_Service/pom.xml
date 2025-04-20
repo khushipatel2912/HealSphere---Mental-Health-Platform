@@ -586,7 +586,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.example.self_discovery_service.SelfDiscoveryServiceApplication</mainClass>
+                            <mainClass>org.example.letters_service.LettersServiceApplication</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
