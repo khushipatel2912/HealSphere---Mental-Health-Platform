@@ -10,4 +10,6 @@ public interface SelfHelpService {
     List<SelfHelpContent> getContentByLevel(Long levelId);
     List<SelfHelpAssessment> getAssessmentsByLevel(Long levelId);
     void updateUserProgress(SelfHelpUserProgress progress);
+    List<SelfHelpUserProgress> getProgressByUser(Long userId);
+
 }

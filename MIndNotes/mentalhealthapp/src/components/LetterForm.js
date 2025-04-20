@@ -1,34 +1,43 @@
-import React, { useState } from 'react';
-import { postLetter } from '../services/letterService';
+// src/components/LetterForm.js
+import React, { useState } from "react";
+import { postLetter } from "../services/lettersApi";
 import '../styles/Letters.css';
+import DashboardButton from '../components/DashboardButton';
+const LetterForm = ({ onSuccess }) => {
+  const [form, setForm] = useState({
+    date: "",
+    category: "",
+    heading: "",
+    content: ""
+  });
 
-const LetterForm = ({ token }) => {
-    const [letter, setLetter] = useState({ heading: '', content: '', category: '', date: '' });
-    const [message, setMessage] = useState('');
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            await postLetter(letter, token);
-            setMessage('Letter posted successfully.');
-        } catch (error) {
-            setMessage('Failed to post letter.');
-        }
-    };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await postLetter(form);
+      alert("Letter posted successfully!");
+      onSuccess(); // Refresh list
+    } catch (error) {
+      alert("Error posting letter");
+      console.error(error);
+    }
+  };
 
-    return (
-        <div className="letter-form">
-            <h2>Post a Letter</h2>
-            {message && <p>{message}</p>}
-            <form onSubmit={handleSubmit}>
-                <input type="text" placeholder="Heading" onChange={e => setLetter({ ...letter, heading: e.target.value })} required />
-                <textarea placeholder="Content" onChange={e => setLetter({ ...letter, content: e.target.value })} required />
-                <input type="text" placeholder="Category" onChange={e => setLetter({ ...letter, category: e.target.value })} required />
-                <input type="date" onChange={e => setLetter({ ...letter, date: e.target.value })} required />
-                <button type="submit">Submit</button>
-            </form>
-        </div>
-    );
+  return (
+    <form onSubmit={handleSubmit}>
+      <input type="date" name="date" value={form.date} onChange={handleChange} required />
+      <input type="text" name="category" placeholder="Category" value={form.category} onChange={handleChange} required />
+      <input type="text" name="heading" placeholder="Heading" value={form.heading} onChange={handleChange} required />
+      <textarea name="content" placeholder="Content" value={form.content} onChange={handleChange} required />
+      <button type="submit">Post Letter</button>
+      <DashboardButton />
+    </form>
+    
+  );
 };
 
 export default LetterForm;

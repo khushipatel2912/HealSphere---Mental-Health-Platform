@@ -62,4 +62,12 @@ public class LetterController {
         getUserIdFromToken(authHeader); // Validate user
         return ResponseEntity.ok(letterService.getLettersByCategory(category));
     }
+    // LetterController.java
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAllCategories(@RequestHeader("Authorization") String authHeader) {
+        getUserIdFromToken(authHeader); // Validate user
+        return ResponseEntity.ok(letterService.getAllCategories());
+    }
+
+
 }

@@ -46,4 +46,10 @@ public class SelfHelpServiceImpl implements SelfHelpService {
         progressRepo.save(progress);
     }
 
+    @Override
+    public List<SelfHelpUserProgress> getProgressByUser(Long userId) {
+        return progressRepo.findByUserId(userId);
+    }
+
+
 }

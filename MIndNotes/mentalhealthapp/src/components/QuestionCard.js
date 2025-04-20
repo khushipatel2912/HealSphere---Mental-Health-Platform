@@ -1,6 +1,6 @@
 import React from 'react';
 import '../styles/SelfDiscovery.css';
-
+import DashboardButton from '../components/DashboardButton';
 export default function QuestionCard({ question, options, selected, setSelected }) {
   return (
     <div className="card my-3">
@@ -17,6 +17,7 @@ export default function QuestionCard({ question, options, selected, setSelected 
               onChange={() => setSelected(opt.optionText)}
             />
             <label className="form-check-label">{opt.optionText}</label>
+            <DashboardButton />
           </div>
         ))}
       </div>

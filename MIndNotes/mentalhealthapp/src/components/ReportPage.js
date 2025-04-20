@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getReport } from '../services/SelfDiscoveryService';
 import { useAuth } from '../context/AuthContext';
 import '../styles/SelfDiscovery.css';
-
+import DashboardButton from '../components/DashboardButton';
 export default function ReportPage() {
   const [reports, setReports] = useState([]);
   const { token } = useAuth();
@@ -26,6 +26,7 @@ export default function ReportPage() {
           </li>
         ))}
       </ul>
+      <DashboardButton />
     </div>
   );
 }

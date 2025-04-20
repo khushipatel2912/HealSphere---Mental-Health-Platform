@@ -4,6 +4,7 @@ import QuestionCard from './QuestionCard';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/SelfDiscovery.css';
+import DashboardButton from '../components/DashboardButton';
 
 export default function SelfDiscovery() {
   const [questions, setQuestions] = useState([]);
@@ -48,6 +49,7 @@ export default function SelfDiscovery() {
       <button className="btn btn-success" onClick={handleSubmit}>
         Submit
       </button>
+      <DashboardButton />
     </div>
   );
 }

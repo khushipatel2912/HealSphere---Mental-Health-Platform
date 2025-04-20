@@ -22,4 +22,10 @@ public class LetterService {
     public List<Letter> getLettersByCategory(String category) {
         return letterRepository.findByCategory(category);
     }
+
+    // LetterService.java
+    public List<String> getAllCategories() {
+        return letterRepository.findDistinctCategories();
+    }
+
 }

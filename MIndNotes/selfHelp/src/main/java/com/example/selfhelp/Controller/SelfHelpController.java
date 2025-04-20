@@ -77,4 +77,10 @@ public class SelfHelpController {
 
         return "{\"message\": \"Progress Updated Successfully\"}";
     }
+    @GetMapping("/progress")
+    public List<SelfHelpUserProgress> getUserProgress(@RequestHeader("Authorization") String authHeader) {
+        Long userId = getUserIdFromToken(authHeader);
+        return selfHelpService.getProgressByUser(userId);
+    }
+
 }
