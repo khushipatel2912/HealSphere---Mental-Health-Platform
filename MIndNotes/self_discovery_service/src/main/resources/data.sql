@@ -23,3 +23,21 @@ INSERT INTO reports (id, question_id, report_text, selected_option) VALUES
                                                                         (4, 1, 'This has been affecting you for a long time. Professional help may be useful.', 'A year'),
                                                                         (5, 1, 'This has been a long-term concern. Consider seeking structured support.', 'More than a year');
 
+
+INSERT INTO reports (question_id, report_text, selected_option) VALUES
+(2, 'It’s rare that you feel relieved. Let’s explore what’s holding it in.', 'Rarely'),
+(2, 'You sometimes manage to cope. Identifying what helps could be useful.', 'Sometimes'),
+(2, 'You often find ways to manage. Let’s strengthen those coping strategies.', 'Often'),
+(2, 'You feel burdened very often. Let’s work together to ease that.', 'Very often');
+
+INSERT INTO reports (question_id, report_text, selected_option) VALUES
+(3, 'You rarely feel overwhelmed. It’s good to have moments of clarity.', 'Never'),
+(3, 'You occasionally feel this way. Let’s explore those triggers.', 'Occasionally'),
+(3, 'You frequently feel overwhelmed. Learning to manage stress might help.', 'Frequently'),
+(3, 'You always feel overwhelmed. Support and tools can lighten the load.', 'Always');
+
+INSERT INTO reports (question_id, report_text, selected_option) VALUES
+(4, 'It seems this hasn’t affected you. Still, self-awareness is valuable.', 'No'),
+(4, 'There’s a slight impact. Early intervention can make a difference.', 'Slightly'),
+(4, 'It’s affecting you moderately. Let’s discuss ways to regain balance.', 'Moderately'),
+(4, 'This has a severe impact. Seeking support could bring relief.', 'Severely');
