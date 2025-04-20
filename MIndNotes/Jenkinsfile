@@ -1,0 +1,27 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_COMPOSE_PATH = 'docker-compose.yml'
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git 'https://github.com/khushipatel2912/HealSphere---Mental-Health-Platform.git'
+            }
+        }
+
+        stage('Build Services') {
+            steps {
+                sh 'docker-compose build'
+            }
+        }
+
+        stage('Deploy using Ansible') {
+            steps {
+                ansiblePlaybook credentialsId: 'your-ansible-ssh-key-id', playbook: 'ansible/deploy.yml'
+            }
+        }
+    }
+}
