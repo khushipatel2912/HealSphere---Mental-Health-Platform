@@ -1,6 +1,6 @@
 package org.example.letters_service.config;
 
-
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest; // Import this
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,7 +20,11 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/letters/**").permitAll()
+                        // ADD THIS RULE: Allow unauthenticated access to the health endpoint
+                        .requestMatchers(EndpointRequest.to("health")).permitAll()
+                        // Keep your existing rules
+                        .requestMatchers("/api/letters/**").permitAll() // Adjust paths per service if needed
+                        // Catch-all for authentication
                         .anyRequest().authenticated()
                 );
 
@@ -36,7 +40,4 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
-
 }
-
