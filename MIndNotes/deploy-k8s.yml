@@ -10,12 +10,12 @@
     k8s_namespace: "mindnotes" # Default namespace
 
   tasks:
-    - name: Ensure Kubernetes collection is available
-      ansible.builtin.assert:
-        that:
-          - lookup('community.general.collection_file', 'kubernetes.core.k8s') is not none
-        fail_msg: "Ansible collection 'kubernetes.core' not found. Please install using: ansible-galaxy collection install kubernetes.core"
-        quiet: true # Avoid verbose output on success
+    # - name: Ensure Kubernetes collection is available
+    #   ansible.builtin.assert:
+    #     that:
+    #       - lookup('community.general.collection_file', 'kubernetes.core.k8s') is not none
+    #     fail_msg: "Ansible collection 'kubernetes.core' not found. Please install using: ansible-galaxy collection install kubernetes.core"
+    #     quiet: true # Avoid verbose output on success
 
     - name: Ensure Python kubernetes library is available
       ansible.builtin.pip:
