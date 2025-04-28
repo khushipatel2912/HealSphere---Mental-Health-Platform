@@ -91,16 +91,40 @@ pipeline {
         //     }
         // }
 
+        //         stage('Deploy to Kubernetes via Ansible') {
+        //     steps {
+        //         // Force UTF-8 locale environment variables for this block
+        //         withEnv(["LANG=en_US.UTF-8", "LC_ALL=en_US.UTF-8"]) {
+        //             script {
+        //                 echo "--- Running Ansible with forced UTF-8 locale ---" // Add for logging
+        //                 ansiblePlaybook(
+        //                     playbook: 'MIndNotes/deploy-k8s.yml',
+        //                     inventory: 'MIndNotes/inventory-k8s',
+        //                     extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}"
+        //                 )
+        //             }
+        //         } // End withEnv
+        //     }
+        // }
                 stage('Deploy to Kubernetes via Ansible') {
             steps {
-                // Force UTF-8 locale environment variables for this block
-                withEnv(["LANG=en_US.UTF-8", "LC_ALL=en_US.UTF-8"]) {
+                // Force UTF-8 locale AND specify collections path
+                withEnv([
+                    "LANG=en_US.UTF-8",
+                    "LC_ALL=en_US.UTF-8",
+                    "ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections"
+                ]) {
                     script {
-                        echo "--- Running Ansible with forced UTF-8 locale ---" // Add for logging
+                        echo "--- Running Ansible with forced UTF-8 locale and collections path ---"
+                        // Construct the absolute path to the manifests
+                        def absoluteManifestPath = "${env.WORKSPACE}/MIndNotes/k8s"
+                        echo "Manifest path being passed to Ansible: ${absoluteManifestPath}" // Add for logging
+
                         ansiblePlaybook(
                             playbook: 'MIndNotes/deploy-k8s.yml',
                             inventory: 'MIndNotes/inventory-k8s',
-                            extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}"
+                            // Pass the absolute path as the value for k8s_manifest_path
+                            extras: "-e k8s_manifest_path=${absoluteManifestPath} -e k8s_namespace=${env.K8S_NAMESPACE}"
                         )
                     }
                 } // End withEnv
