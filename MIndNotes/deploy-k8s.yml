@@ -23,23 +23,49 @@
     #     state: present
     #   become: true # May need sudo/root to install pip packages globally
 
-    - name: Apply all K8s manifests from the specified directory
-      kubernetes.core.k8s:
-        state: present # Ensure resources exist
-        src: "{{ k8s_manifest_path }}" # Use the variable for the path
-        # Namespace is defined within most manifests, but applying here ensures consistency
-        # If a manifest lacks a namespace, this 'namespace' parameter acts as a default.
-        # However, for applying a directory, it's best if all manifests explicitly define their namespace.
-        # namespace: "{{ k8s_namespace }}" # Generally safe to omit if all yamls have namespace: mindnotes
-        # Apply Pruning: Remove resources not defined in the manifests anymore (optional, use with caution)
-        # prune: true
-        # label_selector: "app in (mysql, login-service, self-discovery-service, ...)" # Example if pruning
-      register: k8s_apply_result
+    # - name: Apply all K8s manifests from the specified directory
+    #   kubernetes.core.k8s:
+    #     state: present # Ensure resources exist
+    #     src: "{{ k8s_manifest_path }}" # Use the variable for the path
+    #     # Namespace is defined within most manifests, but applying here ensures consistency
+    #     # If a manifest lacks a namespace, this 'namespace' parameter acts as a default.
+    #     # However, for applying a directory, it's best if all manifests explicitly define their namespace.
+    #     # namespace: "{{ k8s_namespace }}" # Generally safe to omit if all yamls have namespace: mindnotes
+    #     # Apply Pruning: Remove resources not defined in the manifests anymore (optional, use with caution)
+    #     # prune: true
+    #     # label_selector: "app in (mysql, login-service, self-discovery-service, ...)" # Example if pruning
+    #   register: k8s_apply_result
 
-    - name: Show K8s apply results
-      ansible.builtin.debug:
-        var: k8s_apply_result
-        verbosity: 1 # Show only if -v is used
+    # - name: Show K8s apply results
+    #   ansible.builtin.debug:
+    #     var: k8s_apply_result
+    #     verbosity: 1 # Show only if -v is used
+
+    # tasks: # Context line
+
+# # Ensure Python kubernetes library is available - Task commented out
+# - name: Ensure Python kubernetes library is available
+#   ansible.builtin.pip:
+#     name: kubernetes
+#     state: present
+#   become: true
+
+# --- REPLACE the kubernetes.core.k8s task with this one ---
+- name: Apply all K8s manifests using kubectl
+  ansible.builtin.command:
+    # Use kubectl apply -k if you have a kustomization.yaml
+    # Use kubectl apply -f for applying a directory of yaml files
+    cmd: "kubectl apply -n {{ k8s_namespace }} -f {{ k8s_manifest_path }}"
+  register: kubectl_apply_result
+  changed_when: "'configured' in kubectl_apply_result.stdout or 'created' in kubectl_apply_result.stdout"
+  failed_when: kubectl_apply_result.rc != 0
+
+- name: Show kubectl apply results
+  ansible.builtin.debug:
+    var: kubectl_apply_result.stdout_lines
+    verbosity: 1 # Show only if -v is used
+
+# (Optional: Add wait tasks here if needed)
 
     # Optional: Wait for deployments to become ready
     # - name: Wait for Login Service deployment rollout to complete
