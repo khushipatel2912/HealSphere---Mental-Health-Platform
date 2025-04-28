@@ -6,10 +6,11 @@
 
   # These vars will be overridden by -e from Jenkins if provided
   vars:
-    k8s_manifest_path: "{{ lookup('env', 'WORKSPACE') }}/MIndNotes/k8s" # Default path relative to workspace
+    k8s_manifest_path: "{{ lookup('env', 'WORKSPACE') }}/MIndNotes/k8s" # Default path relative to workspace - Jenkins should pass absolute path
     k8s_namespace: "mindnotes" # Default namespace
 
   tasks:
+    # # Task to Ensure Kubernetes collection is available - Commented Out
     # - name: Ensure Kubernetes collection is available
     #   ansible.builtin.assert:
     #     that:
@@ -17,12 +18,14 @@
     #     fail_msg: "Ansible collection 'kubernetes.core' not found. Please install using: ansible-galaxy collection install kubernetes.core"
     #     quiet: true # Avoid verbose output on success
 
+    # # Task to Ensure Python kubernetes library is available - Commented Out
     # - name: Ensure Python kubernetes library is available
     #   ansible.builtin.pip:
     #     name: kubernetes
     #     state: present
     #   become: true # May need sudo/root to install pip packages globally
 
+    # # Task using kubernetes.core.k8s to apply manifests - Commented Out (Replaced by kubectl command)
     # - name: Apply all K8s manifests from the specified directory
     #   kubernetes.core.k8s:
     #     state: present # Ensure resources exist
@@ -35,39 +38,28 @@
     #     # prune: true
     #     # label_selector: "app in (mysql, login-service, self-discovery-service, ...)" # Example if pruning
     #   register: k8s_apply_result
-
-    # - name: Show K8s apply results
+    #
+    # - name: Show K8s apply results # Debug task for kubernetes.core.k8s task - Commented Out
     #   ansible.builtin.debug:
     #     var: k8s_apply_result
     #     verbosity: 1 # Show only if -v is used
 
-    # tasks: # Context line
+    # --- Task using kubectl command to apply manifests ---
+    - name: Apply all K8s manifests using kubectl
+      ansible.builtin.command:
+        # Use kubectl apply -k if you have a kustomization.yaml
+        # Use kubectl apply -f for applying a directory of yaml files
+        cmd: "kubectl apply -n {{ k8s_namespace }} -f {{ k8s_manifest_path }}"
+      register: kubectl_apply_result
+      changed_when: "'configured' in kubectl_apply_result.stdout or 'created' in kubectl_apply_result.stdout"
+      failed_when: kubectl_apply_result.rc != 0
 
-# # Ensure Python kubernetes library is available - Task commented out
-# - name: Ensure Python kubernetes library is available
-#   ansible.builtin.pip:
-#     name: kubernetes
-#     state: present
-#   become: true
+    - name: Show kubectl apply results
+      ansible.builtin.debug:
+        var: kubectl_apply_result.stdout_lines
+        verbosity: 1 # Show only if -v is used
 
-# --- REPLACE the kubernetes.core.k8s task with this one ---
-- name: Apply all K8s manifests using kubectl
-  ansible.builtin.command:
-    # Use kubectl apply -k if you have a kustomization.yaml
-    # Use kubectl apply -f for applying a directory of yaml files
-    cmd: "kubectl apply -n {{ k8s_namespace }} -f {{ k8s_manifest_path }}"
-  register: kubectl_apply_result
-  changed_when: "'configured' in kubectl_apply_result.stdout or 'created' in kubectl_apply_result.stdout"
-  failed_when: kubectl_apply_result.rc != 0
-
-- name: Show kubectl apply results
-  ansible.builtin.debug:
-    var: kubectl_apply_result.stdout_lines
-    verbosity: 1 # Show only if -v is used
-
-# (Optional: Add wait tasks here if needed)
-
-    # Optional: Wait for deployments to become ready
+    # Optional: Wait for deployments to become ready (Commented out for now)
     # - name: Wait for Login Service deployment rollout to complete
     #   kubernetes.core.k8s_info:
     #     api_version: apps/v1
