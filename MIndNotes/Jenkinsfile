@@ -83,8 +83,8 @@ pipeline {
                     // Assumes deploy-k8s.yml and inventory-k8s are in the root of the checked-out repo
                     // Remove ANSIBLE_HOST_KEY_CHECKING as we use local connection
                     ansiblePlaybook(
-                        playbook: 'deploy-k8s.yml',
-                        inventory: 'inventory-k8s',
+                        playbook: 'MIndNotes/deploy-k8s.yml',
+                        inventory: 'MIndNotes/inventory-k8s',
                         extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}" // Pass vars to Ansible
                     )
                 }
