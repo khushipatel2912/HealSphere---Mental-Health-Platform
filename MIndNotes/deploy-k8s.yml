@@ -17,11 +17,11 @@
     #     fail_msg: "Ansible collection 'kubernetes.core' not found. Please install using: ansible-galaxy collection install kubernetes.core"
     #     quiet: true # Avoid verbose output on success
 
-    - name: Ensure Python kubernetes library is available
-      ansible.builtin.pip:
-        name: kubernetes
-        state: present
-      become: true # May need sudo/root to install pip packages globally
+    # - name: Ensure Python kubernetes library is available
+    #   ansible.builtin.pip:
+    #     name: kubernetes
+    #     state: present
+    #   become: true # May need sudo/root to install pip packages globally
 
     - name: Apply all K8s manifests from the specified directory
       kubernetes.core.k8s:
