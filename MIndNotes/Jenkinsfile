@@ -73,21 +73,37 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes via Ansible') {
-            steps {
-                script {
-                    // Ensure ansible collection is installed (better to do this on agent setup)
-                    // sh 'ansible-galaxy collection install kubernetes.core'
+        // stage('Deploy to Kubernetes via Ansible') {
+        //     steps {
+        //         script {
+        //             // Ensure ansible collection is installed (better to do this on agent setup)
+        //             // sh 'ansible-galaxy collection install kubernetes.core'
 
-                    // Run the new Ansible playbook for K8s
-                    // Assumes deploy-k8s.yml and inventory-k8s are in the root of the checked-out repo
-                    // Remove ANSIBLE_HOST_KEY_CHECKING as we use local connection
-                    ansiblePlaybook(
-                        playbook: 'MIndNotes/deploy-k8s.yml',
-                        inventory: 'MIndNotes/inventory-k8s',
-                        extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}" // Pass vars to Ansible
-                    )
-                }
+        //             // Run the new Ansible playbook for K8s
+        //             // Assumes deploy-k8s.yml and inventory-k8s are in the root of the checked-out repo
+        //             // Remove ANSIBLE_HOST_KEY_CHECKING as we use local connection
+        //             ansiblePlaybook(
+        //                 playbook: 'MIndNotes/deploy-k8s.yml',
+        //                 inventory: 'MIndNotes/inventory-k8s',
+        //                 extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}" // Pass vars to Ansible
+        //             )
+        //         }
+        //     }
+        // }
+
+                stage('Deploy to Kubernetes via Ansible') {
+            steps {
+                // Force UTF-8 locale environment variables for this block
+                withEnv(["LANG=en_US.UTF-8", "LC_ALL=en_US.UTF-8"]) {
+                    script {
+                        echo "--- Running Ansible with forced UTF-8 locale ---" // Add for logging
+                        ansiblePlaybook(
+                            playbook: 'MIndNotes/deploy-k8s.yml',
+                            inventory: 'MIndNotes/inventory-k8s',
+                            extras: "-e k8s_manifest_path=${env.K8S_MANIFEST_PATH} -e k8s_namespace=${env.K8S_NAMESPACE}"
+                        )
+                    }
+                } // End withEnv
             }
         }
     }
