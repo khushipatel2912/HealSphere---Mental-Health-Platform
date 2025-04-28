@@ -106,24 +106,23 @@ pipeline {
         //         } // End withEnv
         //     }
         // }
-                stage('Deploy to Kubernetes via Ansible') {
+
+        stage('Deploy to Kubernetes via Ansible') {
             steps {
-                // Force UTF-8 locale AND specify collections path
+                // Force UTF-8 locale AND specify collections path (singular)
                 withEnv([
                     "LANG=en_US.UTF-8",
                     "LC_ALL=en_US.UTF-8",
-                    "ANSIBLE_COLLECTIONS_PATHS=/usr/share/ansible/collections"
+                    "ANSIBLE_COLLECTIONS_PATH=/usr/share/ansible/collections" // Corrected to singular
                 ]) {
                     script {
                         echo "--- Running Ansible with forced UTF-8 locale and collections path ---"
-                        // Construct the absolute path to the manifests
                         def absoluteManifestPath = "${env.WORKSPACE}/MIndNotes/k8s"
-                        echo "Manifest path being passed to Ansible: ${absoluteManifestPath}" // Add for logging
+                        echo "Manifest path being passed to Ansible: ${absoluteManifestPath}"
 
                         ansiblePlaybook(
                             playbook: 'MIndNotes/deploy-k8s.yml',
                             inventory: 'MIndNotes/inventory-k8s',
-                            // Pass the absolute path as the value for k8s_manifest_path
                             extras: "-e k8s_manifest_path=${absoluteManifestPath} -e k8s_namespace=${env.K8S_NAMESPACE}"
                         )
                     }
