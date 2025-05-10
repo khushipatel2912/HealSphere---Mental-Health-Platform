@@ -6,7 +6,7 @@ metadata:
   labels:
     app: frontend
 spec:
-  replicas: 1 # Can also be scaled if needed
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -14,15 +14,17 @@ spec:
     metadata:
       labels:
         app: frontend
+      annotations:
+        co.elastic.logs/enabled: "true" # For Filebeat autodiscover/hints
     spec:
       containers:
       - name: frontend
-        image: khushi2912/frontend:latest # Replace with your image
+        image: khushi2912/frontend:latest
         ports:
-        - containerPort: 80 # Nginx listens on port 80 inside the container
+        - containerPort: 80
         readinessProbe:
           httpGet:
-            path: /index.html # Check if Nginx is serving the main file
+            path: /index.html
             port: 80
           initialDelaySeconds: 5
           periodSeconds: 5
@@ -32,3 +34,47 @@ spec:
             port: 80
           initialDelaySeconds: 15
           periodSeconds: 10
+
+      # ---- BEGIN FILEBEAT SIDECAR ----
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:8.12.2
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://elasticsearch-service.elk.svc.cluster.local:9200" # Adjust if your ES is in a different namespace
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: filebeat-config-volume
+          mountPath: /etc/filebeat.yml
+          subPath: filebeat.yml
+          readOnly: true
+        - name: varlogcontainers
+          mountPath: /var/log/containers
+          readOnly: true
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      # ---- END FILEBEAT SIDECAR ----
+
+      volumes:
+      # ---- BEGIN FILEBEAT VOLUMES ----
+      - name: filebeat-config-volume
+        configMap:
+          name: filebeat-config
+          defaultMode: 0640
+      - name: varlogcontainers
+        hostPath:
+          path: /var/log/containers
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      # ---- END FILEBEAT VOLUMES ----
