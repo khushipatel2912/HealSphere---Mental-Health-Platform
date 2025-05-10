@@ -17,6 +17,7 @@ spec:
       annotations:
         co.elastic.logs/enabled: "true" # For Filebeat autodiscover/hints
     spec:
+    serviceAccountName: filebeat
       containers:
       - name: self-discovery-service
         image: khushi2912/self-discovery-service:latest
