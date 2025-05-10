@@ -65,6 +65,12 @@ spec:
             fieldRef:
               apiVersion: v1
               fieldPath: metadata.namespace
+              # ---- ADD THIS SECTION FOR NODE_NAME ----
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        # ---- END NODE_NAME SECTION ----
         securityContext:
           runAsUser: 0
         volumeMounts:
