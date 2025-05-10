@@ -21,34 +21,63 @@
         var: app_kubectl_apply_result.stdout_lines
         verbosity: 1
 
-    - name: Apply ELK Stack K8s manifests
+    - name: Apply ELK Stack K8s manifests (excluding RBAC ServiceAccount if handled separately)
       ansible.builtin.command:
+        # This applies everything in the k8s-elk directory.
+        # If 07-filebeat-serviceaccount.yaml is here AND its namespace is 'mindnotes', this will error.
+        # It's generally better to move 07-filebeat-serviceaccount.yaml to the app_k8s_manifest_path
+        # or apply it with the correct namespace in a separate task (as done below for RBAC).
         cmd: "kubectl apply -n {{ elk_k8s_namespace }} -f {{ elk_k8s_manifest_path }}"
       register: elk_kubectl_apply_result
       changed_when: "'configured' in elk_kubectl_apply_result.stdout or 'created' in elk_kubectl_apply_result.stdout"
       failed_when: elk_kubectl_apply_result.rc != 0
-      # Add ignore_errors if you want the pipeline to continue if ELK deployment has issues but app is fine
-      # ignore_errors: yes
+      # ignore_errors: yes # Consider if ELK failure should not stop app deployment
 
     - name: Show ELK Stack kubectl apply results
       ansible.builtin.debug:
         var: elk_kubectl_apply_result.stdout_lines
         verbosity: 1
 
-    # CORRECTED INDENTATION FOR RBAC TASK AND ITS DEBUG TASK
-    - name: Apply Filebeat RBAC K8s manifests
+    # --- Applying RBAC Components Individually ---
+    - name: Apply Filebeat ServiceAccount
       ansible.builtin.command:
-        # Assuming you put RBAC files in k8s-elk directory for this example
-        cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/07-filebeat-serviceaccount.yaml -f {{ elk_k8s_manifest_path }}/08-filebeat-clusterrole.yaml -f {{ elk_k8s_manifest_path }}/09-filebeat-clusterrolebinding.yaml"
-        # If you created a new k8s-rbac directory, adjust the path.
-        # You might need to pass another path variable from Jenkins if it's a new directory.
-      register: rbac_kubectl_apply_result
-      changed_when: "'configured' in rbac_kubectl_apply_result.stdout or 'created' in rbac_kubectl_apply_result.stdout"
-      failed_when: rbac_kubectl_apply_result.rc != 0
+        # The ServiceAccount needs to be in the app's namespace (mindnotes)
+        # Assuming 07-filebeat-serviceaccount.yaml is in the elk_k8s_manifest_path directory for now
+        # AND that its metadata.namespace is correctly set to {{ app_k8s_namespace }}
+        cmd: "kubectl apply -n {{ app_k8s_namespace }} -f {{ elk_k8s_manifest_path }}/07-filebeat-serviceaccount.yaml"
+      register: sa_apply_result
+      changed_when: "'configured' in sa_apply_result.stdout or 'created' in sa_apply_result.stdout"
+      failed_when: sa_apply_result.rc != 0
 
-    - name: Show Filebeat RBAC kubectl apply results
+    - name: Show Filebeat ServiceAccount apply results
       ansible.builtin.debug:
-        var: rbac_kubectl_apply_result.stdout_lines
+        var: sa_apply_result.stdout_lines
+        verbosity: 1
+
+    - name: Apply Filebeat ClusterRole
+      ansible.builtin.command:
+        # ClusterRole is not namespaced
+        cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/08-filebeat-clusterrole.yaml"
+      register: cr_apply_result
+      changed_when: "'configured' in cr_apply_result.stdout or 'created' in cr_apply_result.stdout"
+      failed_when: cr_apply_result.rc != 0
+
+    - name: Show Filebeat ClusterRole apply results
+      ansible.builtin.debug:
+        var: cr_apply_result.stdout_lines
+        verbosity: 1
+
+    - name: Apply Filebeat ClusterRoleBinding
+      ansible.builtin.command:
+        # ClusterRoleBinding is not namespaced
+        cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/09-filebeat-clusterrolebinding.yaml"
+      register: crb_apply_result
+      changed_when: "'configured' in crb_apply_result.stdout or 'created' in crb_apply_result.stdout"
+      failed_when: crb_apply_result.rc != 0
+
+    - name: Show Filebeat ClusterRoleBinding apply results
+      ansible.builtin.debug:
+        var: crb_apply_result.stdout_lines
         verbosity: 1
 
     # Add waits for deployments if needed
