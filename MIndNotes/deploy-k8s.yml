@@ -1,74 +1,41 @@
 ---
-- name: Deploy HealSphere App to Kubernetes
-  hosts: localhost # Target localhost defined in inventory-k8s
-  gather_facts: false # Not needed for K8s tasks
-  connection: local  # Use local connection
+- name: Deploy HealSphere App and ELK Stack to Kubernetes
+  hosts: localhost
+  gather_facts: false
+  connection: local
 
-  # These vars will be overridden by -e from Jenkins if provided
-  vars:
-    k8s_manifest_path: "{{ lookup('env', 'WORKSPACE') }}/MIndNotes/k8s" # Default path relative to workspace - Jenkins should pass absolute path
-    k8s_namespace: "mindnotes" # Default namespace
+  # Variables passed from Jenkins via -e
+  # app_k8s_manifest_path, app_k8s_namespace
+  # elk_k8s_manifest_path, elk_k8s_namespace
 
   tasks:
-    # # Task to Ensure Kubernetes collection is available - Commented Out
-    # - name: Ensure Kubernetes collection is available
-    #   ansible.builtin.assert:
-    #     that:
-    #       - lookup('community.general.collection_file', 'kubernetes.core.k8s') is not none
-    #     fail_msg: "Ansible collection 'kubernetes.core' not found. Please install using: ansible-galaxy collection install kubernetes.core"
-    #     quiet: true # Avoid verbose output on success
-
-    # # Task to Ensure Python kubernetes library is available - Commented Out
-    # - name: Ensure Python kubernetes library is available
-    #   ansible.builtin.pip:
-    #     name: kubernetes
-    #     state: present
-    #   become: true # May need sudo/root to install pip packages globally
-
-    # # Task using kubernetes.core.k8s to apply manifests - Commented Out (Replaced by kubectl command)
-    # - name: Apply all K8s manifests from the specified directory
-    #   kubernetes.core.k8s:
-    #     state: present # Ensure resources exist
-    #     src: "{{ k8s_manifest_path }}" # Use the variable for the path
-    #     # Namespace is defined within most manifests, but applying here ensures consistency
-    #     # If a manifest lacks a namespace, this 'namespace' parameter acts as a default.
-    #     # However, for applying a directory, it's best if all manifests explicitly define their namespace.
-    #     # namespace: "{{ k8s_namespace }}" # Generally safe to omit if all yamls have namespace: mindnotes
-    #     # Apply Pruning: Remove resources not defined in the manifests anymore (optional, use with caution)
-    #     # prune: true
-    #     # label_selector: "app in (mysql, login-service, self-discovery-service, ...)" # Example if pruning
-    #   register: k8s_apply_result
-    #
-    # - name: Show K8s apply results # Debug task for kubernetes.core.k8s task - Commented Out
-    #   ansible.builtin.debug:
-    #     var: k8s_apply_result
-    #     verbosity: 1 # Show only if -v is used
-
-    # --- Task using kubectl command to apply manifests ---
-    - name: Apply all K8s manifests using kubectl
+    - name: Apply HealSphere Application K8s manifests
       ansible.builtin.command:
-        # Use kubectl apply -k if you have a kustomization.yaml
-        # Use kubectl apply -f for applying a directory of yaml files
-        cmd: "kubectl apply -n {{ k8s_namespace }} -f {{ k8s_manifest_path }}"
-      register: kubectl_apply_result
-      changed_when: "'configured' in kubectl_apply_result.stdout or 'created' in kubectl_apply_result.stdout"
-      failed_when: kubectl_apply_result.rc != 0
+        cmd: "kubectl apply -n {{ app_k8s_namespace }} -f {{ app_k8s_manifest_path }}"
+      register: app_kubectl_apply_result
+      changed_when: "'configured' in app_kubectl_apply_result.stdout or 'created' in app_kubectl_apply_result.stdout"
+      failed_when: app_kubectl_apply_result.rc != 0
 
-    - name: Show kubectl apply results
+    - name: Show HealSphere App kubectl apply results
       ansible.builtin.debug:
-        var: kubectl_apply_result.stdout_lines
-        verbosity: 1 # Show only if -v is used
+        var: app_kubectl_apply_result.stdout_lines
+        verbosity: 1
 
-    # Optional: Wait for deployments to become ready (Commented out for now)
+    - name: Apply ELK Stack K8s manifests
+      ansible.builtin.command:
+        cmd: "kubectl apply -n {{ elk_k8s_namespace }} -f {{ elk_k8s_manifest_path }}"
+      register: elk_kubectl_apply_result
+      changed_when: "'configured' in elk_kubectl_apply_result.stdout or 'created' in elk_kubectl_apply_result.stdout"
+      failed_when: elk_kubectl_apply_result.rc != 0
+      # Add ignore_errors if you want the pipeline to continue if ELK deployment has issues but app is fine
+      # ignore_errors: yes
+
+    - name: Show ELK Stack kubectl apply results
+      ansible.builtin.debug:
+        var: elk_kubectl_apply_result.stdout_lines
+        verbosity: 1
+
+    # Add waits for deployments if needed
     # - name: Wait for Login Service deployment rollout to complete
-    #   kubernetes.core.k8s_info:
-    #     api_version: apps/v1
-    #     kind: Deployment
-    #     name: login-service-deployment
-    #     namespace: "{{ k8s_namespace }}"
-    #   register: dep_status
-    #   until: "dep_status.resources[0].status.readyReplicas is defined and dep_status.resources[0].status.readyReplicas == dep_status.resources[0].spec.replicas"
-    #   retries: 30
-    #   delay: 10 # Check every 10 seconds for 5 minutes
-
-    # (Add similar waits for other critical deployments if needed)
+    #   kubernetes.core.k8s_info: # This would require kubernetes.core collection to be functional
+    # ...
