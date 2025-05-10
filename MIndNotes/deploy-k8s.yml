@@ -35,20 +35,21 @@
         var: elk_kubectl_apply_result.stdout_lines
         verbosity: 1
 
-     name: Apply Filebeat RBAC K8s manifests
-  ansible.builtin.command:
-    # Assuming you put RBAC files in k8s-elk directory for this example
-    cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/07-filebeat-serviceaccount.yaml -f {{ elk_k8s_manifest_path }}/08-filebeat-clusterrole.yaml -f {{ elk_k8s_manifest_path }}/09-filebeat-clusterrolebinding.yaml"
-    # If you created a new k8s-rbac directory, adjust the path.
-    # You might need to pass another path variable from Jenkins if it's a new directory.
-  register: rbac_kubectl_apply_result
-  changed_when: "'configured' in rbac_kubectl_apply_result.stdout or 'created' in rbac_kubectl_apply_result.stdout"
-  failed_when: rbac_kubectl_apply_result.rc != 0
+    # CORRECTED INDENTATION FOR RBAC TASK AND ITS DEBUG TASK
+    - name: Apply Filebeat RBAC K8s manifests
+      ansible.builtin.command:
+        # Assuming you put RBAC files in k8s-elk directory for this example
+        cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/07-filebeat-serviceaccount.yaml -f {{ elk_k8s_manifest_path }}/08-filebeat-clusterrole.yaml -f {{ elk_k8s_manifest_path }}/09-filebeat-clusterrolebinding.yaml"
+        # If you created a new k8s-rbac directory, adjust the path.
+        # You might need to pass another path variable from Jenkins if it's a new directory.
+      register: rbac_kubectl_apply_result
+      changed_when: "'configured' in rbac_kubectl_apply_result.stdout or 'created' in rbac_kubectl_apply_result.stdout"
+      failed_when: rbac_kubectl_apply_result.rc != 0
 
-- name: Show Filebeat RBAC kubectl apply results
-  ansible.builtin.debug:
-    var: rbac_kubectl_apply_result.stdout_lines
-    verbosity: 1
+    - name: Show Filebeat RBAC kubectl apply results
+      ansible.builtin.debug:
+        var: rbac_kubectl_apply_result.stdout_lines
+        verbosity: 1
 
     # Add waits for deployments if needed
     # - name: Wait for Login Service deployment rollout to complete
