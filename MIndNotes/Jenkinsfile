@@ -79,6 +79,12 @@ pipeline {
                         echo "App Namespace: ${env.APP_K8S_NAMESPACE}"
                         echo "ELK Namespace: ${env.ELK_K8S_NAMESPACE}"
 
+                        
+                    // --- BEGIN DEBUG ---
+                    echo "Listing contents of ELK manifest directory: ${absoluteElkManifestPath}"
+                    sh "ls -la ${absoluteElkManifestPath}" // <<< ADD THIS LINE BACK
+                    // --- END DEBUG ---
+
 
                         ansiblePlaybook(
                             playbook: 'MIndNotes/deploy-k8s.yml',
