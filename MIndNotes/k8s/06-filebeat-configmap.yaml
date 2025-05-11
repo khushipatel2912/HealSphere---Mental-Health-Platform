@@ -1,3 +1,4 @@
+# MIndNotes/k8s/06-filebeat-configmap.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,16 +11,30 @@ data:
     filebeat.autodiscover:
       providers:
         - type: kubernetes
+          node: ${NODE_NAME}               # Ensures provider knows the node
           hints.enabled: true
-          hints.default_config:
+          hints.default_config:         # Default config for any container
             type: container
             paths:
               - /var/log/containers/*${data.kubernetes.container.id}.log
 
     processors:
       - add_kubernetes_metadata:
-          in_cluster: true # Use in-cluster discovery
+          in_cluster: true              # Uses in-cluster K8s API access
+          node: ${NODE_NAME}               # Helps associate logs with the node
+
+    # Optional: If your Spring Boot apps log in JSON format, uncomment and adjust this
+    # - decode_json_fields:
+    #     fields: ["message"]         # Assumes the JSON string is in the 'message' field
+    #     target: "json_decoded"      # Decoded JSON will be placed under 'json_decoded'
+    #     overwrite_keys: false       # Set to true if you want to merge into root
+    #     add_error_key: true
 
     output.elasticsearch:
-      hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"] # Adjust if ES is in a different namespace
-      # index: "mindnotes-logs-%{[agent.version]}-%{+yyyy.MM.dd}" # Optional custom index name
+      hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"] # VERIFY THIS FQDN
+      index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}" # Explicitly set default for clarity
+
+    # Optional: Disable Kibana dashboard loading by Filebeat
+    # setup.dashboards.enabled: false
+    # setup.kibana:
+    #   host: "http://kibana-service.elk.svc.cluster.local:5601" # VERIFY THIS FQDN
