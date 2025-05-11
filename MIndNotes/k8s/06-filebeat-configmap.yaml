@@ -8,33 +8,24 @@ metadata:
     app: filebeat
 data:
   filebeat.yml: |
-    filebeat.autodiscover:
-      providers:
-        - type: kubernetes
-          node: ${NODE_NAME}               # Ensures provider knows the node
-          hints.enabled: true
-          hints.default_config:         # Default config for any container
-            type: container
-            paths:
-              - /var/log/containers/*${data.kubernetes.container.id}.log
+    filebeat.inputs:
+    - type: log # Using the basic 'log' input type, not 'container' for now
+      enabled: true
+      paths:
+        - /var/log/containers/*.log # Broadly try to pick up all .log files in this dir
+      # Optional: Add a field to know these are from the simple input
+      # fields:
+      #   input_type: simple_log_input
+      # fields_under_root: true
 
+    # Keep processors if you want metadata, though it might be less accurate without specific container context
     processors:
       - add_kubernetes_metadata:
-          in_cluster: true              # Uses in-cluster K8s API access
-          node: ${NODE_NAME}               # Helps associate logs with the node
-
-    # Optional: If your Spring Boot apps log in JSON format, uncomment and adjust this
-    # - decode_json_fields:
-    #     fields: ["message"]         # Assumes the JSON string is in the 'message' field
-    #     target: "json_decoded"      # Decoded JSON will be placed under 'json_decoded'
-    #     overwrite_keys: false       # Set to true if you want to merge into root
-    #     add_error_key: true
+          in_cluster: true
+          node: ${NODE_NAME} 
+          # Default indexers and matchers are generally okay
+          # You might see warnings if it can't associate specific metadata without container ID context
 
     output.elasticsearch:
       hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"] # VERIFY THIS FQDN
-      index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}" # Explicitly set default for clarity
-
-    # Optional: Disable Kibana dashboard loading by Filebeat
-    # setup.dashboards.enabled: false
-    # setup.kibana:
-    #   host: "http://kibana-service.elk.svc.cluster.local:5601" # VERIFY THIS FQDN
+      index: "filebeat-simple-input-%{+yyyy.MM.dd}" # Use a DIFFERENT index name for this test
