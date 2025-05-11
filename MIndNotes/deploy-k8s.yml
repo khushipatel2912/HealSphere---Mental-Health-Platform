@@ -1,62 +1,49 @@
 ---
-- name: Deploy HealSphere App and ELK Stack to Kubernetes
+- name: Deploy HealSphere App, ELK Stack, and RBAC to Kubernetes
   hosts: localhost
   gather_facts: false
   connection: local
 
   # Variables passed from Jenkins via -e
-  # app_k8s_manifest_path, app_k8s_namespace
-  # elk_k8s_manifest_path, elk_k8s_namespace
+  # app_k8s_manifest_path is MIndNotes/k8s (contains app yamls, filebeat SA, filebeat CM)
+  # elk_k8s_manifest_path is MIndNotes/k8s-elk (contains ELK yamls, filebeat CR, filebeat CRB)
+  # app_k8s_namespace is mindnotes
+  # elk_k8s_namespace is elk
 
   tasks:
-    - name: Apply HealSphere Application K8s manifests
+    - name: Apply HealSphere Application, Filebeat SA, and Filebeat CM
       ansible.builtin.command:
+        # This applies everything in MIndNotes/k8s/ (including 06- and 07-) to the 'mindnotes' namespace
         cmd: "kubectl apply -n {{ app_k8s_namespace }} -f {{ app_k8s_manifest_path }}"
       register: app_kubectl_apply_result
       changed_when: "'configured' in app_kubectl_apply_result.stdout or 'created' in app_kubectl_apply_result.stdout"
       failed_when: app_kubectl_apply_result.rc != 0
 
-    - name: Show HealSphere App kubectl apply results
+    - name: Show HealSphere App, SA, CM kubectl apply results
       ansible.builtin.debug:
         var: app_kubectl_apply_result.stdout_lines
         verbosity: 1
 
-    - name: Apply ELK Stack K8s manifests (excluding RBAC ServiceAccount if handled separately)
+    - name: Apply ELK Stack K8s manifests (ES and Kibana components)
       ansible.builtin.command:
-        # This applies everything in the k8s-elk directory.
-        # If 07-filebeat-serviceaccount.yaml is here AND its namespace is 'mindnotes', this will error.
-        # It's generally better to move 07-filebeat-serviceaccount.yaml to the app_k8s_manifest_path
-        # or apply it with the correct namespace in a separate task (as done below for RBAC).
+        # This applies MIndNotes/k8s-elk/00- to MIndNotes/k8s-elk/05- to the 'elk' namespace
+        # It will also attempt to apply 08- and 09- but -n elk is ignored for cluster-scoped resources.
         cmd: "kubectl apply -n {{ elk_k8s_namespace }} -f {{ elk_k8s_manifest_path }}"
       register: elk_kubectl_apply_result
       changed_when: "'configured' in elk_kubectl_apply_result.stdout or 'created' in elk_kubectl_apply_result.stdout"
       failed_when: elk_kubectl_apply_result.rc != 0
-      # ignore_errors: yes # Consider if ELK failure should not stop app deployment
 
     - name: Show ELK Stack kubectl apply results
       ansible.builtin.debug:
         var: elk_kubectl_apply_result.stdout_lines
         verbosity: 1
 
-    # --- Applying RBAC Components Individually ---
-    - name: Apply Filebeat ServiceAccount
+    # The ClusterRole and ClusterRoleBinding might have already been applied by the task above
+    # because kubectl apply -f on a directory applies all files.
+    # However, applying them again explicitly ensures they are configured if they weren't,
+    # and kubectl apply is idempotent. These are cluster-scoped, so -n is not strictly needed.
+    - name: Apply Filebeat ClusterRole (ensure it exists)
       ansible.builtin.command:
-        # The ServiceAccount needs to be in the app's namespace (mindnotes)
-        # Assuming 07-filebeat-serviceaccount.yaml is in the elk_k8s_manifest_path directory for now
-        # AND that its metadata.namespace is correctly set to {{ app_k8s_namespace }}
-        cmd: "kubectl apply -n {{ app_k8s_namespace }} -f {{ elk_k8s_manifest_path }}/07-filebeat-serviceaccount.yaml"
-      register: sa_apply_result
-      changed_when: "'configured' in sa_apply_result.stdout or 'created' in sa_apply_result.stdout"
-      failed_when: sa_apply_result.rc != 0
-
-    - name: Show Filebeat ServiceAccount apply results
-      ansible.builtin.debug:
-        var: sa_apply_result.stdout_lines
-        verbosity: 1
-
-    - name: Apply Filebeat ClusterRole
-      ansible.builtin.command:
-        # ClusterRole is not namespaced
         cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/08-filebeat-clusterrole.yaml"
       register: cr_apply_result
       changed_when: "'configured' in cr_apply_result.stdout or 'created' in cr_apply_result.stdout"
@@ -67,9 +54,8 @@
         var: cr_apply_result.stdout_lines
         verbosity: 1
 
-    - name: Apply Filebeat ClusterRoleBinding
+    - name: Apply Filebeat ClusterRoleBinding (ensure it exists)
       ansible.builtin.command:
-        # ClusterRoleBinding is not namespaced
         cmd: "kubectl apply -f {{ elk_k8s_manifest_path }}/09-filebeat-clusterrolebinding.yaml"
       register: crb_apply_result
       changed_when: "'configured' in crb_apply_result.stdout or 'created' in crb_apply_result.stdout"
@@ -79,8 +65,3 @@
       ansible.builtin.debug:
         var: crb_apply_result.stdout_lines
         verbosity: 1
-
-    # Add waits for deployments if needed
-    # - name: Wait for Login Service deployment rollout to complete
-    #   kubernetes.core.k8s_info: # This would require kubernetes.core collection to be functional
-    # ...
