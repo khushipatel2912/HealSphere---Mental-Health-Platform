@@ -32,7 +32,7 @@ data:
 
     output.elasticsearch:
       hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"] # VERIFY THIS FQDN
-      index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}" # Explicitly set default for clarity
+      # index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}" # Explicitly set default for clarity
 
     # Optional: Disable Kibana dashboard loading by Filebeat
     # setup.dashboards.enabled: false
