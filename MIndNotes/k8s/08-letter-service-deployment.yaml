@@ -6,7 +6,7 @@ metadata:
   labels:
     app: letter-service
 spec:
-  replicas: 1 # Start with 1, HPA will manage this later
+  replicas: 1
   selector:
     matchLabels:
       app: letter-service
@@ -14,15 +14,18 @@ spec:
     metadata:
       labels:
         app: letter-service
+      annotations:
+        co.elastic.logs/enabled: "true"
     spec:
+      serviceAccountName: filebeat # Corrected indentation
       containers:
       - name: letter-service
-        image: khushi2912/letter-service:latest # Replace with your image
+        image: khushi2912/letter-service:latest
         ports:
-        - containerPort: 9095 # The port the app listens on INSIDE the container
+        - containerPort: 9095
         env:
         - name: SPRING_DATASOURCE_URL
-          value: "jdbc:mysql://mysql-db:3306/mindnotes_db?createDatabaseIfNotExist=true" # Use the k8s service name 'mysql-db'
+          value: "jdbc:mysql://mysql-db:3306/mindnotes_db?createDatabaseIfNotExist=true"
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -33,20 +36,67 @@ spec:
             secretKeyRef:
               name: mysql-secrets
               key: MYSQL_PASSWORD
-        # Add Liveness and Readiness Probes (Essential for reliable deployments & HPA)
-        # Assuming Spring Boot Actuator is enabled (/actuator/health)
         readinessProbe:
           httpGet:
-            path: /actuator/health # Or just /actuator/health if simpler
+            path: /actuator/health
             port: 9095
-          initialDelaySeconds: 30 # Give time for Spring Boot to start
+          initialDelaySeconds: 30
           periodSeconds: 10
           failureThreshold: 3
         livenessProbe:
           httpGet:
-            path: /actuator/health # Or just /actuator/health
+            path: /actuator/health
             port: 9095
           initialDelaySeconds: 60
           periodSeconds: 15
           failureThreshold: 3
 
+      # ---- BEGIN FILEBEAT SIDECAR ----
+      - name: filebeat
+        image: docker.elastic.co/beats/filebeat:8.12.2
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        env:
+        - name: ELASTICSEARCH_HOSTS
+          value: "http://elasticsearch-service.elk.svc.cluster.local:9200"
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        # ---- CORRECTED NODE_NAME SECTION ----
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        # ---- END NODE_NAME SECTION ----
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: filebeat-config-volume
+          mountPath: /etc/filebeat.yml
+          subPath: filebeat.yml
+          readOnly: true
+        - name: varlogcontainers
+          mountPath: /var/log/containers
+          readOnly: true
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      # ---- END FILEBEAT SIDECAR ----
+
+      volumes:
+      # ---- BEGIN FILEBEAT VOLUMES ----
+      - name: filebeat-config-volume
+        configMap:
+          name: filebeat-config
+          defaultMode: 0640
+      - name: varlogcontainers
+        hostPath:
+          path: /var/log/containers
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      # ---- END FILEBEAT VOLUMES ----
