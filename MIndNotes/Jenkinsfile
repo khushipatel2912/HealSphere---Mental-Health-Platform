@@ -17,7 +17,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'featurefilebeats', url: 'https://github.com/khushipatel2912/HealSphere---Mental-Health-Platform.git'
+                git branch: 'main', url: 'https://github.com/khushipatel2912/HealSphere---Mental-Health-Platform.git'
             }
         }
 
