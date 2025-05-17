@@ -3,38 +3,26 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: filebeat-config
-  namespace: mindnotes # IMPORTANT: Namespace of your applications
+  namespace: mindnotes
   labels:
     app: filebeat
 data:
   filebeat.yml: |
-    filebeat.autodiscover:
-      providers:
-        - type: kubernetes
-          node: ${NODE_NAME}               # Ensures provider knows the node
-          hints.enabled: true
-          hints.default_config:         # Default config for any container
-            type: container
-            paths:
-              - /var/log/containers/*${data.kubernetes.container.id}.log
+    filebeat.inputs:
+    - type: log 
+      enabled: true
+      paths:
+        - /var/log/containers/*.log 
+      # Forcing it to read from the beginning of files for this test
+      # This can cause duplicate logs if run multiple times on existing files, but good for diagnosing if it reads ANYTHING
+      tail_files: false 
+      scan_frequency: 5s # Check for new files more often
 
     processors:
       - add_kubernetes_metadata:
-          in_cluster: true              # Uses in-cluster K8s API access
-          node: ${NODE_NAME}               # Helps associate logs with the node
-
-    # Optional: If your Spring Boot apps log in JSON format, uncomment and adjust this
-    # - decode_json_fields:
-    #     fields: ["message"]         # Assumes the JSON string is in the 'message' field
-    #     target: "json_decoded"      # Decoded JSON will be placed under 'json_decoded'
-    #     overwrite_keys: false       # Set to true if you want to merge into root
-    #     add_error_key: true
+          in_cluster: true
+          node: ${NODE_NAME} 
 
     output.elasticsearch:
-      hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"] # VERIFY THIS FQDN
-      # index: "filebeat-%{[agent.version]}-%{+yyyy.MM.dd}" # Explicitly set default for clarity
-
-    # Optional: Disable Kibana dashboard loading by Filebeat
-    # setup.dashboards.enabled: false
-    # setup.kibana:
-    #   host: "http://kibana-service.elk.svc.cluster.local:5601" # VERIFY THIS FQDN
+      hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"]
+      index: "filebeat-simplest-test-%{+yyyy.MM.dd}" # NEW, DISTINCT INDEX NAME
