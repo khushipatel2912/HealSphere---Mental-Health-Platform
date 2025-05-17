@@ -8,21 +8,22 @@ metadata:
     app: filebeat
 data:
   filebeat.yml: |
-    filebeat.inputs:
-    - type: log 
-      enabled: true
-      paths:
-        - /var/log/containers/*.log 
-      # Forcing it to read from the beginning of files for this test
-      # This can cause duplicate logs if run multiple times on existing files, but good for diagnosing if it reads ANYTHING
-      tail_files: false 
-      scan_frequency: 5s # Check for new files more often
+    # Using autodiscover as it's generally better for Kubernetes
+    filebeat.autodiscover:
+      providers:
+        - type: kubernetes
+          node: ${NODE_NAME}
+          hints.enabled: true
+          hints.default_config:
+            type: container
+            paths:
+              - /var/log/containers/*${data.kubernetes.container.id}.log
 
     processors:
       - add_kubernetes_metadata:
           in_cluster: true
-          node: ${NODE_NAME} 
+          node: ${NODE_NAME}
 
     output.elasticsearch:
       hosts: ["http://elasticsearch-service.elk.svc.cluster.local:9200"]
-      index: "filebeat-simplest-test-%{+yyyy.MM.dd}" # NEW, DISTINCT INDEX NAME
+      # NO 'index:' line here, or ensure it's commented out to use Filebeat default
