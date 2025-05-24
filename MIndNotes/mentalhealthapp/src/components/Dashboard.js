@@ -64,7 +64,7 @@ const Dashboard = () => {
     
             {/* Logout Button at Bottom Center */}
             <div className="logout-button-container">
-                <button className="logout-button" onClick={handleLogout}>Logout</button>
+                <button className="logout-button" onClick={handleLogout}>Logout User</button>
             </div>
         </div>
     );
