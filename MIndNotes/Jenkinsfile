@@ -11,7 +11,7 @@ pipeline {
         APP_K8S_NAMESPACE = 'mindnotes' // Namespace for your main application
         APP_K8S_MANIFEST_PATH = 'MIndNotes/k8s'
         ELK_K8S_NAMESPACE = 'elk' // Namespace for ELK stack
-        ELK_K8S_MANIFEST_PATH = 'MIndNotes/k8s-elk' // Path to ELK K8s manifests
+        ELK_K8S_MANIFEST_PATH = 'MIndNotes/k8s-elk' 
     }
 
     
