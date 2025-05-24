@@ -14,6 +14,7 @@ pipeline {
         ELK_K8S_MANIFEST_PATH = 'MIndNotes/k8s-elk' // Path to ELK K8s manifests
     }
 
+
     
     
     stages {
